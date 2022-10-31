@@ -13,7 +13,8 @@ setuptools.setup(
     description="KAT: A Knowledge Augmented Transformer for Vision-and-Language",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(where="src"),
+    package_dir={"": "src"},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

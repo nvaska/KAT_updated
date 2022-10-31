@@ -28,8 +28,7 @@ class FiDT5(transformers.T5ForConditionalGeneration):
             # inputs might have already be resized in the generate method
             if input_ids.dim() == 3:
                 self.encoder.n_passages = input_ids.size(1)
-            input_ids = input_ids.view(input_ids.size(0), -1)
-
+            input_ids = input_ids.view(input_ids.size(0), -1)        
         if attention_mask != None:
             attention_mask = attention_mask.view(attention_mask.size(0), -1)
 
@@ -132,14 +131,23 @@ class EncoderWrapper(torch.nn.Module):
         self.main_input_name = 'input_ids' #required for recent versions of transformers package
         apply_checkpoint_wrapper(self.encoder, use_checkpoint)
 
-    def forward(self, input_ids=None, attention_mask=None, **kwargs,):
+    def forward(self, input_ids=None, attention_mask=None, stop_token_id=1, **kwargs,):
         # total_length = n_passages * passage_length
         bsz, total_length = input_ids.shape
         passage_length = total_length // self.n_passages
         input_ids = input_ids.view(bsz*self.n_passages, passage_length)
+        
         attention_mask = attention_mask.view(bsz*self.n_passages, passage_length)
+     
+        #removes stop token and corresponding attention mask
+        #required since original tokenizer in transformers v3.0.2 did not add stop tokens
+        attention_mask = torch.where(input_ids == stop_token_id , False, attention_mask)
+        input_ids = torch.where(input_ids == stop_token_id , 0, input_ids)
+
         outputs = self.encoder(input_ids, attention_mask, **kwargs)
         outputs = (outputs[0].view(bsz, self.n_passages*passage_length, -1), ) + outputs[1:]
+
+
         return outputs
 
 class CheckpointWrapper(torch.nn.Module):

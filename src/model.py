@@ -129,7 +129,7 @@ class EncoderWrapper(torch.nn.Module):
         super().__init__()
 
         self.encoder = encoder
-        self.main_input_name = 'input_ids'
+        self.main_input_name = 'input_ids' #required for recent versions of transformers package
         apply_checkpoint_wrapper(self.encoder, use_checkpoint)
 
     def forward(self, input_ids=None, attention_mask=None, **kwargs,):
